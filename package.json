@@ -29,7 +29,7 @@
     "@types/morgan": "^1.9.3",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
-    "mongoose": "^6.0.8",
+    "mongoose": "^6.0.9",
     "morgan": "^1.10.0",
     "nest-morgan": "^2.0.0",
     "reflect-metadata": "^0.1.13",
