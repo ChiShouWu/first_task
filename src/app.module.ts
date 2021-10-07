@@ -6,9 +6,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from './pipes/validation.pipe';
 import { MongooseModule } from '@nestjs/mongoose';
 @Module({
-  imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017'),
-    UsersModule],
+  imports: [MongooseModule.forRoot('mongodb://localhost:27017'), UsersModule],
   controllers: [AppController],
   providers: [
     {
@@ -18,4 +16,4 @@ import { MongooseModule } from '@nestjs/mongoose';
     AppService,
   ],
 })
-export class AppModule { }
+export class AppModule {}

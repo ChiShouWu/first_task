@@ -22,10 +22,11 @@ export class UsersService {
   }
 
   update(id: string, updateUserDto: UpdateUserDto) {
-    return this.userModel.findOneAndUpdate({id}, updateUserDto).exec();
+    return this.userModel.findOneAndUpdate({ id }, updateUserDto).exec();
   }
 
-  remove(id: string) {
-    return this.userModel.findOneAndRemove({id}).exec();
+  remove(id: string): Boolean {
+    if (this.userModel.findOneAndRemove({ id }).exec()) return true;
+    return false;
   }
 }
