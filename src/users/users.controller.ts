@@ -30,8 +30,10 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { IsObjectIdPipe } from 'src/pipes/IsObjectId.pipp';
 import { User } from './user.schema';
 import { ApiFile } from 'src/decorators/api.decorator';
+import { NotFoundInterceptor } from 'src/interceptors/notfound.interceptor';
 
 @ApiTags('users')
+@UseInterceptors(NotFoundInterceptor)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -70,7 +72,7 @@ export class UsersController {
 
   @Patch(':id')
   @ApiOkResponse({
-    description: 'Users found',
+    description: 'User found and updated success',
     type: User,
   })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
@@ -85,13 +87,14 @@ export class UsersController {
 
   @Delete(':id')
   @ApiOkResponse({
-    description: 'Users found',
+    description: 'User remove success',
   })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   remove(@Param('id', IsObjectIdPipe) id: string) {
-    return this.usersService.remove(id);
+    if (this.usersService.remove(id)) return 'User remove success';
+    else return;
   }
 
   @Post('upload')
