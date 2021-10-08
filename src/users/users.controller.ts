@@ -6,9 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  UseInterceptors,
+  UploadedFile,
+  Res,
 } from '@nestjs/common';
 import {
   ApiTags,
+  ApiParam,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
@@ -16,11 +20,17 @@ import {
   ApiOkResponse,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { v4 as uuidv4 } from 'uuid';
+import { extname } from 'path';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { IsObjectIdPipe } from 'src/pipes/IsObjectId.pipp';
 import { User } from './user.schema';
+import { ApiFile } from 'src/decorators/api.decorator';
+
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
@@ -82,5 +92,34 @@ export class UsersController {
   @ApiBadRequestResponse({ description: 'Bad Request' })
   remove(@Param('id', IsObjectIdPipe) id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Post('upload')
+  @ApiFile()
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const filename: string = uuidv4();
+          const extension: string = extname(file.originalname);
+
+          callback(null, `${filename}${extension}`);
+        },
+      }),
+    }),
+  )
+  uploadFile(@UploadedFile() file: Express.Multer.File) {
+    return file.filename;
+  }
+
+  @Get('/file/:filename')
+  @ApiParam({ name: 'filename', type: 'string' })
+  @ApiOkResponse()
+  @ApiInternalServerErrorResponse({ description: 'Internal server error' })
+  @ApiNotFoundResponse({ description: 'File not found' })
+  getFile(@Param('filename') filename, @Res() res) {
+    console.log(filename);
+    return res.sendFile(filename, { root: './uploads' });
   }
 }

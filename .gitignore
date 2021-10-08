@@ -37,3 +37,5 @@ lerna-debug.log*
 # docker
 docker/data/
 docker/logs/
+
+uploads/

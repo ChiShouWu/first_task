@@ -25,7 +25,7 @@ export class UsersService {
     return this.userModel.findOneAndUpdate({ id }, updateUserDto).exec();
   }
 
-  remove(id: string): Boolean {
+  remove(id: string): boolean {
     if (this.userModel.findOneAndRemove({ id }).exec()) return true;
     return false;
   }
