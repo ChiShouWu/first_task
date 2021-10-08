@@ -5,6 +5,7 @@ import {
   CallHandler,
   NotFoundException,
 } from '@nestjs/common';
+import { isEmpty } from 'class-validator';
 import { Observable, tap } from 'rxjs';
 
 @Injectable()
@@ -12,7 +13,7 @@ export class NotFoundInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       tap((data) => {
-        if (data === undefined || data === null) throw new NotFoundException();
+        if (isEmpty(data)) throw new NotFoundException();
       }),
     );
   }

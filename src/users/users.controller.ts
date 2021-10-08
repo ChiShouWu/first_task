@@ -92,9 +92,9 @@ export class UsersController {
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  remove(@Param('id', IsObjectIdPipe) id: string) {
-    if (this.usersService.remove(id)) return 'User remove success';
-    else return;
+  async remove(@Param('id', IsObjectIdPipe) id: string) {
+    const result = await this.usersService.remove(id);
+    if (result) return 'User remove success';
   }
 
   @Post('upload')
