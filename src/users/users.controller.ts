@@ -31,6 +31,7 @@ import { IsObjectIdPipe } from 'src/pipes/IsObjectId.pipp';
 import { User } from './user.schema';
 import { ApiFile } from 'src/decorators/api.decorator';
 import { NotFoundInterceptor } from 'src/interceptors/notfound.interceptor';
+import { GrpcMethod } from '@nestjs/microservices';
 
 @ApiTags('users')
 @UseInterceptors(NotFoundInterceptor)
@@ -39,14 +40,17 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @GrpcMethod('UserService', 'create')
   @ApiCreatedResponse({
     description: 'The record has been successfully created.',
     type: User,
   })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto) {
+    const user = await this.usersService.create(createUserDto);
+    console.log(user);
+    return user;
   }
 
   @Get()
@@ -54,8 +58,10 @@ export class UsersController {
   @ApiOkResponse({ description: 'Users found', type: [User] })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  findAll() {
-    return this.usersService.findAll();
+  async findAll() {
+    const users = await this.usersService.findAll();
+    console.log(users);
+    return users;
   }
 
   @Get(':id')
@@ -86,6 +92,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @GrpcMethod('UserService', 'delete')
   @ApiOkResponse({
     description: 'User remove success',
   })
@@ -124,5 +131,46 @@ export class UsersController {
   getFile(@Param('filename') filename, @Res() res) {
     console.log(filename);
     return res.sendFile(filename, { root: './uploads' });
+  }
+
+  // grpc part
+  @GrpcMethod('UserService', 'update')
+  updateMicro(@Body() updateUserDto: UpdateUserDto) {
+    try {
+      const { id } = updateUserDto;
+      return this.usersService.update(id, updateUserDto);
+    } catch (e) {
+      return e.response;
+    }
+  }
+
+  @GrpcMethod('UserService', 'findAll')
+  async findAllMicro() {
+    try {
+      return { Users: await this.usersService.findAll() };
+    } catch (e) {
+      return e.response;
+    }
+  }
+
+  @GrpcMethod('UserService', 'findById')
+  async findByIdMicro(@Body() updateUserDto: UpdateUserDto) {
+    try {
+      return await this.usersService.findOne(updateUserDto.id);
+    } catch (e) {
+      return e.response;
+    }
+  }
+
+  @GrpcMethod('UserService', 'delete')
+  async removeMicro(@Body() updateUserDto: UpdateUserDto) {
+    try {
+      const removedUser = await this.usersService.remove(updateUserDto.id);
+      console.log(removedUser !== null);
+      if (removedUser !== null) return { success: true };
+      return { success: false };
+    } catch (e) {
+      return e.response;
+    }
   }
 }

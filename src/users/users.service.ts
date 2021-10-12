@@ -28,6 +28,7 @@ export class UsersService {
   }
 
   remove(id: string) {
+    console.log(id);
     return this.userModel.findByIdAndRemove(id).exec();
   }
 }
