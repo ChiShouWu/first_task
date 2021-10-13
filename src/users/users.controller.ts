@@ -92,7 +92,6 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @GrpcMethod('UserService', 'delete')
   @ApiOkResponse({
     description: 'User remove success',
   })
