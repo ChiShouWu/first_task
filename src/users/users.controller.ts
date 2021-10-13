@@ -134,7 +134,7 @@ export class UsersController {
 
   // grpc part
   @GrpcMethod('UserService', 'update')
-  updateMicro(@Body() updateUserDto: UpdateUserDto) {
+  updateMicro(updateUserDto: UpdateUserDto) {
     try {
       const { id } = updateUserDto;
       return this.usersService.update(id, updateUserDto);
@@ -153,7 +153,7 @@ export class UsersController {
   }
 
   @GrpcMethod('UserService', 'findById')
-  async findByIdMicro(@Body() updateUserDto: UpdateUserDto) {
+  async findByIdMicro(updateUserDto: UpdateUserDto) {
     try {
       return await this.usersService.findOne(updateUserDto.id);
     } catch (e) {
@@ -162,7 +162,7 @@ export class UsersController {
   }
 
   @GrpcMethod('UserService', 'delete')
-  async removeMicro(@Body() updateUserDto: UpdateUserDto) {
+  async removeMicro(updateUserDto: UpdateUserDto) {
     try {
       const removedUser = await this.usersService.remove(updateUserDto.id);
       if (removedUser !== null) return { success: true };
@@ -174,9 +174,6 @@ export class UsersController {
 
   @GrpcStreamMethod('UserService', 'uploadFile')
   uploadFileMicro(messages: Observable<UploadFileDto>): Observable<any> {
-    // const filename: string = uuidv4();
-    // const extension: string = extname(file.originalname);
-
     let writeStream: fs.WriteStream;
 
     const subject = new Subject();
@@ -195,7 +192,7 @@ export class UsersController {
       });
     };
     const onComplete = () => {
-      writeStream.close();
+      writeStream?.close();
       subject.next({
         reply: {
           stage: UploadStage.complete,
