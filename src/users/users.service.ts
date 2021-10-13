@@ -18,6 +18,7 @@ export class UsersService {
   }
 
   findOne(id: string): Promise<User> {
+    console.log(id);
     return this.userModel.findById(id).exec();
   }
 
@@ -28,7 +29,6 @@ export class UsersService {
   }
 
   remove(id: string) {
-    console.log(id);
     return this.userModel.findByIdAndRemove(id).exec();
   }
 }

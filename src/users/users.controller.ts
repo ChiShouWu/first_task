@@ -49,7 +49,6 @@ export class UsersController {
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   async create(@Body() createUserDto: CreateUserDto) {
     const user = await this.usersService.create(createUserDto);
-    console.log(user);
     return user;
   }
 
@@ -60,7 +59,6 @@ export class UsersController {
   @ApiBadRequestResponse({ description: 'Bad Request' })
   async findAll() {
     const users = await this.usersService.findAll();
-    console.log(users);
     return users;
   }
 
@@ -128,7 +126,6 @@ export class UsersController {
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   @ApiNotFoundResponse({ description: 'File not found' })
   getFile(@Param('filename') filename, @Res() res) {
-    console.log(filename);
     return res.sendFile(filename, { root: './uploads' });
   }
 
@@ -165,7 +162,6 @@ export class UsersController {
   async removeMicro(@Body() updateUserDto: UpdateUserDto) {
     try {
       const removedUser = await this.usersService.remove(updateUserDto.id);
-      console.log(removedUser !== null);
       if (removedUser !== null) return { success: true };
       return { success: false };
     } catch (e) {
