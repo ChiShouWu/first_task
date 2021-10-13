@@ -8,6 +8,7 @@ service UserService {
     rpc findById (Id) returns (User) {}
     rpc update (UpdateRequest) returns (User) {}
     rpc delete (Id) returns (DeleteResponse) {}
+    rpc uploadFile(stream UploadRequest) returns (stream UploadStatus) {}
 }
 
 message Empty {
@@ -42,4 +43,19 @@ message DeleteResponse {
 }
 message Id{
     string id = 1;
+}
+
+enum UploadStage {
+    uploading = 0;
+    complete = 1;
+    failed = 2;
+}
+
+message UploadRequest {
+    string filename = 1;
+    bytes chunk = 2;
+}
+
+message UploadStatus {
+    UploadStage stage = 1;
 }

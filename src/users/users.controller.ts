@@ -24,6 +24,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { extname } from 'path';
+import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
+import { Observable, Subject } from 'rxjs';
+import * as fs from 'fs';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -31,7 +34,7 @@ import { IsObjectIdPipe } from 'src/pipes/IsObjectId.pipp';
 import { User } from './user.schema';
 import { ApiFile } from 'src/decorators/api.decorator';
 import { NotFoundInterceptor } from 'src/interceptors/notfound.interceptor';
-import { GrpcMethod } from '@nestjs/microservices';
+import { UploadFileDto, UploadStage } from './dto/upload-file.dto';
 
 @ApiTags('users')
 @UseInterceptors(NotFoundInterceptor)
@@ -167,5 +170,43 @@ export class UsersController {
     } catch (e) {
       return e.response;
     }
+  }
+
+  @GrpcStreamMethod('UserService', 'uploadFile')
+  uploadFileMicro(messages: Observable<UploadFileDto>): Observable<any> {
+    // const filename: string = uuidv4();
+    // const extension: string = extname(file.originalname);
+
+    let writeStream: fs.WriteStream;
+
+    const subject = new Subject();
+    const onNext = (uploadFile: UploadFileDto) => {
+      // TODO: change file name to dist
+      writeStream =
+        writeStream ??
+        fs.createWriteStream(
+          `uploads/${this.usersService.createFileName(uploadFile.filename)}`,
+        );
+      writeStream.write(uploadFile.chunk);
+      subject.next({
+        reply: {
+          stage: UploadStage.uploading,
+        },
+      });
+    };
+    const onComplete = () => {
+      writeStream.close();
+      subject.next({
+        reply: {
+          stage: UploadStage.complete,
+        },
+      });
+      subject.complete();
+    };
+    messages.subscribe({
+      next: onNext,
+      complete: onComplete,
+    });
+    return subject.asObservable();
   }
 }
