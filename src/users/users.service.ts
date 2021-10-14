@@ -19,7 +19,6 @@ export class UsersService {
   }
 
   findOne(id: string): Promise<User> {
-    console.log(id);
     return this.userModel.findById(id).exec();
   }
 
@@ -36,7 +35,7 @@ export class UsersService {
   createFileName(filename: string): string {
     const hashName: string = uuidv4();
     const extension: string = extname(filename);
-    return `${hashName}.${extension}`;
+    return `${hashName}${extension}`;
   }
   // uploadFile(fileStream: Observable<UploadFileDto>): Observable<UploadStatus> {
   // }

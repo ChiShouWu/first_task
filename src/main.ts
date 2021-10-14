@@ -1,4 +1,5 @@
-import { NestApplication, NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -20,6 +21,14 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+
+  // add validation
+  /*
+  NOTICE
+  In the case of hybrid apps the useGlobalPipes() method doesn't set up pipes for gateways and micro services. 
+  For "standard" (non-hybrid) microservice apps, useGlobalPipes() does mount pipes globally. 
+  */
+  app.useGlobalPipes(new ValidationPipe());
 
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.GRPC,

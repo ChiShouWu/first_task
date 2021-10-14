@@ -9,6 +9,8 @@ import {
   UseInterceptors,
   UploadedFile,
   Res,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,8 +25,12 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import { extname } from 'path';
-import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
+import { extname, join } from 'path';
+import {
+  GrpcMethod,
+  GrpcStreamMethod,
+  RpcException,
+} from '@nestjs/microservices';
 import { Observable, Subject } from 'rxjs';
 import * as fs from 'fs';
 import { UsersService } from './users.service';
@@ -135,41 +141,31 @@ export class UsersController {
   // grpc part
   @GrpcMethod('UserService', 'update')
   updateMicro(updateUserDto: UpdateUserDto) {
-    try {
-      const { id } = updateUserDto;
-      return this.usersService.update(id, updateUserDto);
-    } catch (e) {
-      return e.response;
-    }
+    const { id } = updateUserDto;
+    return this.usersService.update(id, updateUserDto);
   }
 
   @GrpcMethod('UserService', 'findAll')
   async findAllMicro() {
-    try {
-      return { Users: await this.usersService.findAll() };
-    } catch (e) {
-      return e.response;
-    }
+    return { Users: await this.usersService.findAll() };
   }
 
   @GrpcMethod('UserService', 'findById')
   async findByIdMicro(updateUserDto: UpdateUserDto) {
-    try {
-      return await this.usersService.findOne(updateUserDto.id);
-    } catch (e) {
-      return e.response;
-    }
+    const { id } = updateUserDto;
+    if (id) return await this.usersService.findOne(updateUserDto.id);
+    throw new RpcException({
+      code: 3,
+      message: 'Bad request, no user id receieved',
+    });
   }
 
   @GrpcMethod('UserService', 'delete')
+  @UsePipes(new ValidationPipe())
   async removeMicro(updateUserDto: UpdateUserDto) {
-    try {
-      const removedUser = await this.usersService.remove(updateUserDto.id);
-      if (removedUser !== null) return { success: true };
-      return { success: false };
-    } catch (e) {
-      return e.response;
-    }
+    const removedUser = await this.usersService.remove(updateUserDto.id);
+    if (removedUser !== null) return { success: true };
+    return;
   }
 
   @GrpcStreamMethod('UserService', 'uploadFile')
@@ -182,7 +178,11 @@ export class UsersController {
       writeStream =
         writeStream ??
         fs.createWriteStream(
-          `uploads/${this.usersService.createFileName(uploadFile.filename)}`,
+          join(
+            __dirname,
+            '..',
+            `uploads/${this.usersService.createFileName(uploadFile.filename)}`,
+          ),
         );
       writeStream.write(uploadFile.chunk);
       subject.next({
