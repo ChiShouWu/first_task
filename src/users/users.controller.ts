@@ -170,36 +170,39 @@ export class UsersController {
 
   @GrpcStreamMethod('UserService', 'uploadFile')
   uploadFileMicro(messages: Observable<UploadFileDto>): Observable<any> {
-    let writeStream: fs.WriteStream;
-
     const subject = new Subject();
+    let writeStream: fs.WriteStream;
+    let newFilename = '';
+
     const onNext = (uploadFile: UploadFileDto) => {
-      // TODO: change file name to dist
-      writeStream =
-        writeStream ??
-        fs.createWriteStream(
-          join(
-            __dirname,
-            '..',
-            `uploads/${this.usersService.createFileName(uploadFile.filename)}`,
-          ),
-        );
-      writeStream.write(uploadFile.chunk);
+      if (!writeStream) {
+        newFilename = this.usersService.createFileName(uploadFile.filename);
+        writeStream = fs.createWriteStream(`./uploads/${newFilename}`);
+      }
+
+      // writeStream = writeStream ?? writeStream.write(uploadFile.chunk);
+
       subject.next({
         reply: {
           stage: UploadStage.uploading,
+          filename: newFilename,
         },
       });
     };
+
     const onComplete = () => {
       writeStream?.close();
+
       subject.next({
         reply: {
           stage: UploadStage.complete,
+          filename: newFilename,
         },
       });
+
       subject.complete();
     };
+
     messages.subscribe({
       next: onNext,
       complete: onComplete,
