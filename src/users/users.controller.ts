@@ -25,13 +25,14 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import { extname, join } from 'path';
+import { extname } from 'path';
 import {
   GrpcMethod,
   GrpcStreamMethod,
   RpcException,
 } from '@nestjs/microservices';
 import { Observable, Subject } from 'rxjs';
+import { status } from '@grpc/grpc-js';
 import * as fs from 'fs';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -40,7 +41,11 @@ import { IsObjectIdPipe } from 'src/pipes/IsObjectId.pipp';
 import { User } from './user.schema';
 import { ApiFile } from 'src/decorators/api.decorator';
 import { NotFoundInterceptor } from 'src/interceptors/notfound.interceptor';
-import { UploadFileDto, UploadStage } from './dto/upload-file.dto';
+import {
+  UploadFileDto,
+  UploadStage,
+  UploadStatus,
+} from './dto/upload-file.dto';
 
 @ApiTags('users')
 @UseInterceptors(NotFoundInterceptor)
@@ -155,7 +160,7 @@ export class UsersController {
     const { id } = updateUserDto;
     if (id) return await this.usersService.findOne(updateUserDto.id);
     throw new RpcException({
-      code: 3,
+      code: status.INVALID_ARGUMENT,
       message: 'Bad request, no user id receieved',
     });
   }
@@ -169,8 +174,11 @@ export class UsersController {
   }
 
   @GrpcStreamMethod('UserService', 'uploadFile')
-  uploadFileMicro(messages: Observable<UploadFileDto>): Observable<any> {
-    const subject = new Subject();
+  uploadFileMicro(
+    messages: Observable<UploadFileDto>,
+  ): Observable<UploadStatus> {
+    const subject = new Subject<UploadStatus>();
+
     let writeStream: fs.WriteStream;
     let newFilename = '';
 
@@ -179,26 +187,20 @@ export class UsersController {
         newFilename = this.usersService.createFileName(uploadFile.filename);
         writeStream = fs.createWriteStream(`./uploads/${newFilename}`);
       }
-
-      // writeStream = writeStream ?? writeStream.write(uploadFile.chunk);
-
-      subject.next({
-        reply: {
-          stage: UploadStage.uploading,
-          filename: newFilename,
-        },
-      });
+      const uploadStatus: UploadStatus = {
+        stage: UploadStage.uploading,
+        filename: newFilename,
+      };
+      subject.next(uploadStatus);
     };
 
     const onComplete = () => {
       writeStream?.close();
-
-      subject.next({
-        reply: {
-          stage: UploadStage.complete,
-          filename: newFilename,
-        },
-      });
+      const uploadStatus: UploadStatus = {
+        stage: UploadStage.complete,
+        filename: newFilename,
+      };
+      subject.next(uploadStatus);
 
       subject.complete();
     };
