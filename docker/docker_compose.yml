@@ -1,10 +1,10 @@
 version: '3'
 services:
-    backend:
+    first_task:
       build:
         context: ../
         dockerfile: docker/dockerfile
-      image: backend:latest
+      image: first_task:latest
       ports:
         - 3000:3000
       volumes:

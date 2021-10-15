@@ -85,8 +85,8 @@ export class UsersController {
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   @UseInterceptors(NotFoundInterceptor)
-  findOne(@Param('id', IsObjectIdPipe) id: string) {
-    return this.usersService.findOne(id);
+  async findOne(@Param('id', IsObjectIdPipe) id: string) {
+    return await this.usersService.findOne(id);
   }
 
   @Patch(':id')
@@ -98,11 +98,11 @@ export class UsersController {
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   @UseInterceptors(NotFoundInterceptor)
-  update(
+  async update(
     @Param('id', IsObjectIdPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.update(id, updateUserDto);
+    return await this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
@@ -149,9 +149,9 @@ export class UsersController {
   // grpc part
   @GrpcMethod('UserService', 'update')
   @UseInterceptors(NotFoundInterceptor)
-  updateMicro(updateUserDto: UpdateUserDto) {
+  async updateMicro(updateUserDto: UpdateUserDto) {
     const { id } = updateUserDto;
-    return this.usersService.update(id, updateUserDto);
+    return await this.usersService.update(id, updateUserDto);
   }
 
   @GrpcMethod('UserService', 'findAll')
@@ -184,38 +184,6 @@ export class UsersController {
   uploadFileMicro(
     messages: Observable<UploadFileDto>,
   ): Observable<UploadStatus> {
-    const subject = new Subject<UploadStatus>();
-
-    let writeStream: fs.WriteStream;
-    let newFilename = '';
-
-    const onNext = (uploadFile: UploadFileDto) => {
-      if (!writeStream) {
-        newFilename = this.usersService.createFileName(uploadFile.filename);
-        writeStream = fs.createWriteStream(`../uploads/${newFilename}`);
-      }
-      const uploadStatus: UploadStatus = {
-        stage: UploadStage.uploading,
-        filename: newFilename,
-      };
-      subject.next(uploadStatus);
-    };
-
-    const onComplete = () => {
-      writeStream?.close();
-      const uploadStatus: UploadStatus = {
-        stage: UploadStage.complete,
-        filename: newFilename,
-      };
-      subject.next(uploadStatus);
-
-      subject.complete();
-    };
-
-    messages.subscribe({
-      next: onNext,
-      complete: onComplete,
-    });
-    return subject.asObservable();
+    return this.usersService.uploadFile(messages);
   }
 }
