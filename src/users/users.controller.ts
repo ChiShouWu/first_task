@@ -48,7 +48,6 @@ import {
 } from './dto/upload-file.dto';
 
 @ApiTags('users')
-@UseInterceptors(NotFoundInterceptor)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -71,6 +70,7 @@ export class UsersController {
   @ApiOkResponse({ description: 'Users found', type: [User] })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
+  @UseInterceptors(NotFoundInterceptor)
   async findAll() {
     const users = await this.usersService.findAll();
     return users;
@@ -84,6 +84,7 @@ export class UsersController {
   })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
+  @UseInterceptors(NotFoundInterceptor)
   findOne(@Param('id', IsObjectIdPipe) id: string) {
     return this.usersService.findOne(id);
   }
@@ -96,6 +97,7 @@ export class UsersController {
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
+  @UseInterceptors(NotFoundInterceptor)
   update(
     @Param('id', IsObjectIdPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -110,6 +112,7 @@ export class UsersController {
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
+  @UseInterceptors(NotFoundInterceptor)
   async remove(@Param('id', IsObjectIdPipe) id: string) {
     const result = await this.usersService.remove(id);
     if (result) return 'User remove success';
@@ -145,17 +148,20 @@ export class UsersController {
 
   // grpc part
   @GrpcMethod('UserService', 'update')
+  @UseInterceptors(NotFoundInterceptor)
   updateMicro(updateUserDto: UpdateUserDto) {
     const { id } = updateUserDto;
     return this.usersService.update(id, updateUserDto);
   }
 
   @GrpcMethod('UserService', 'findAll')
+  @UseInterceptors(NotFoundInterceptor)
   async findAllMicro() {
     return { Users: await this.usersService.findAll() };
   }
 
   @GrpcMethod('UserService', 'findById')
+  @UseInterceptors(NotFoundInterceptor)
   async findByIdMicro(updateUserDto: UpdateUserDto) {
     const { id } = updateUserDto;
     if (id) return await this.usersService.findOne(updateUserDto.id);
@@ -167,6 +173,7 @@ export class UsersController {
 
   @GrpcMethod('UserService', 'delete')
   @UsePipes(new ValidationPipe())
+  @UseInterceptors(NotFoundInterceptor)
   async removeMicro(updateUserDto: UpdateUserDto) {
     const removedUser = await this.usersService.remove(updateUserDto.id);
     if (removedUser !== null) return { success: true };
@@ -185,7 +192,7 @@ export class UsersController {
     const onNext = (uploadFile: UploadFileDto) => {
       if (!writeStream) {
         newFilename = this.usersService.createFileName(uploadFile.filename);
-        writeStream = fs.createWriteStream(`./uploads/${newFilename}`);
+        writeStream = fs.createWriteStream(`../uploads/${newFilename}`);
       }
       const uploadStatus: UploadStatus = {
         stage: UploadStage.uploading,

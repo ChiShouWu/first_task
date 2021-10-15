@@ -9,27 +9,27 @@ import { User, UserDocument } from './user.schema';
 @Injectable()
 export class UsersService {
   constructor(@InjectModel('User') private userModel: Model<UserDocument>) {}
-  create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const createdUser = new this.userModel(createUserDto);
-    return createdUser.save();
+    return await createdUser.save();
   }
 
-  findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+  async findAll(): Promise<User[]> {
+    return await this.userModel.find().exec();
   }
 
-  findOne(id: string): Promise<User> {
-    return this.userModel.findById(id).exec();
+  async findOne(id: string): Promise<User> {
+    return await this.userModel.findById(id).exec();
   }
 
-  update(id: string, updateUserDto: UpdateUserDto) {
-    return this.userModel
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    return await this.userModel
       .findByIdAndUpdate(id, updateUserDto, { new: true })
       .exec();
   }
 
-  remove(id: string) {
-    return this.userModel.findByIdAndRemove(id).exec();
+  async remove(id: string) {
+    return await this.userModel.findByIdAndRemove(id).exec();
   }
 
   createFileName(filename: string): string {

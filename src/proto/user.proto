@@ -10,7 +10,6 @@ service UserService {
     rpc delete (Id) returns (DeleteResponse) {}
     rpc uploadFile(stream UploadRequest) returns (stream UploadStatus) {}
 }
-
 message Empty {
 }
 

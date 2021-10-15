@@ -8,6 +8,6 @@ export enum UploadStage {
   failed,
 }
 export interface UploadStatus {
-  message: string;
+  filename: string;
   stage: UploadStage;
 }
